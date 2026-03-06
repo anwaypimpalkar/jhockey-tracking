@@ -5,8 +5,7 @@ Description:
     This script is designed to receive data from the Xbee Transmitter (Tx) and parse it for further processing. It is specifically tailored for use with XBee 3 Modules running the 802.15.4 firmware.
 
 Author: Anway Pimpalkar
-Date: 01/23/2024
-
+Date: 03/05/2026
 """
 
 import xbee
@@ -15,11 +14,7 @@ from parse_string import parse_string
 from sys import stdin, stdout
 
 # Unique ID for each robot
-<<<<<<< Updated upstream
 ROBOT_ID = "BA"
-=======
-ROBOT_ID = "L"
->>>>>>> Stashed changes
 
 # Parsing parameters
 startLen = 1
@@ -50,93 +45,59 @@ while True:
     data = stdin.buffer.read()
 
     # If data is received, start processing it
-<<<<<<< Updated upstream
-    if data and data.decode() == "?":
-=======
     if data:
         nowTime = utime.ticks_ms()
 
-        if (utime.ticks_diff(lastDataTime, nowTime)) > timeout:
+        if utime.ticks_diff(nowTime, lastDataTime) > timeout:
             last_payload = None
 
-        if "?" in data.decode():
->>>>>>> Stashed changes
+        if b"?" in data:
+            if last_payload is not None:
+                # Decode the payload
+                receivedMsg = last_payload["payload"].decode("utf-8")
 
-        if last_payload is not None:
-            # Decode the payload
-            receivedMsg = last_payload["payload"].decode("utf-8")
-
-<<<<<<< Updated upstream
-            # If the payload is not empty, parse it
-            if receivedMsg:
-                # Find the start and end of the payload
-                start = receivedMsg.find(">")
-                end = receivedMsg.find(";") + 1
-=======
                 # If the payload is not empty, parse it
                 if receivedMsg:
-                    # print(receivedMsg)
                     # Find the start and end of the payload
                     start = receivedMsg.find(">")
                     end = receivedMsg.find(";") + 1
->>>>>>> Stashed changes
 
-                # If the start and end are found, parse the payload
-                if start != -1 and end != -1:
-                    # Extract the string from the payload
-                    string = receivedMsg[start:end]
+                    # If the start and end are found, parse the payload
+                    if start != -1 and end != 0:
+                        # Extract the string from the payload
+                        string = receivedMsg[start:end]
 
-                    # Parse the string
-                    parsedDict = parse_string(string, parsingParameters)
+                        # Parse the string
+                        parsedDict = parse_string(string, parsingParameters)
 
-                    # Check if the robot ID is a key in the dictionary
-                    if ROBOT_ID in parsedDict:
-                        # If the robot ID is a key in the dictionary, set the match time, match bit, and robot coordinates
-                        matchTime = parsedDict["time"]
-                        matchBit = parsedDict["matchbit"]
-                        robotCoords = parsedDict[ROBOT_ID]
+                        # Get match time if available, otherwise default
+                        if "time" in parsedDict:
+                            matchTime = parsedDict["time"]
+                        else:
+                            matchTime = "9" * timeLen
 
-<<<<<<< Updated upstream
+                        # Get match bit if available, otherwise default
+                        if "matchbit" in parsedDict:
+                            matchBit = parsedDict["matchbit"]
+                        else:
+                            matchBit = "9"
+
+                        # Get robot coordinates if available, otherwise default
+                        if ROBOT_ID in parsedDict:
+                            robotCoords = parsedDict[ROBOT_ID]
+                        else:
+                            robotCoords = "9" * (coordLen * 2) + "9" * angleLen
+
+                        # Create output string for stdout (Arduino/UART interface)
+                        out = matchTime + "," + matchBit + "," + robotCoords + "\n"
+
+                        # Write the output string to stdout
+                        stdout.buffer.write(out.encode())
+
+                        lastDataTime = utime.ticks_ms()
                     else:
-                        # If the robot ID is not a key in the dictionary, set everything to 9s
-                        matchTime = "9" * timeLen
-                        matchBit = "9"
-                        robotCoords = "9" * (coordLen * 2) + "9" * angleLen
-=======
-                            if not checksumValid:
-                                out = "/,////,---,---"
-                                stdout.buffer.write(out.encode())
-                                continue
->>>>>>> Stashed changes
-
-                    # Create output string for stdout (Arduino/UART interface)
-                    out = matchTime + "," + matchBit + "," + robotCoords + "\n"
-
-                    # Write the output string to stdout
-                    stdout.buffer.write(out.encode())
-
-<<<<<<< Updated upstream
-        else:
-            out = "no active tx found\n"
-            stdout.buffer.write(out.encode())
-=======
-                                if "matchbit" in parsedDict:
-                                    matchBit = parsedDict["matchbit"]
-                                else:
-                                    matchBit = "-"
-
-                                if ROBOT_ID in parsedDict:
-                                    robotCoords = parsedDict[ROBOT_ID]
-                                else:
-                                    robotCoords = "---,---"
-
-                                # Create output string for stdout (Arduino/UART interface)
-                                out = matchBit + "," + matchTime + "," + robotCoords
-
-                                # Write the output string to stdout
-                                stdout.buffer.write(out.encode())
-                                lastDataTime = utime.ticks_ms()
+                        out = "?,????,999999999\n"
+                        stdout.buffer.write(out.encode())
             else:
-                out = "?,????,---,---"
+                out = "no active tx found\n"
                 stdout.buffer.write(out.encode())
->>>>>>> Stashed changes
